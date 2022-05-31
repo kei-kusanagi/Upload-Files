@@ -13,24 +13,55 @@
                 <h1 class="title mb-6">Uploader</h1>
 
                 <div
+                    v-if="document"
                     class="progress mb-6"
                 >
-                    <progress class="profgress is-primary" value="50" max="100">50%</progress>
+                    <progress class="progress is-primary" :value="progress" max="100">[[ progress ]]%</progress>
                 </div>
+
                 <div class="file">
                     <label class="file-label">
-                        <input type="file" ref="file" class="file-input">
+                        <input type="file" ref="file" class="file-input" @change="selectFile">
 
                         <span class="file-cta">
                             <span class="file-label">Choose a file</span>
                         </span>
                     </label>
                 </div>
+                
+                <button class="button is-primary mt-2" v-if="document">Upload</button>
+
+                <div 
+                    class="notification mt-6"
+                    v-if="message"
+                >
+                    [[ message ]]
+                </div>
             </div>
         </section>
 
         <script src="https://unpkg.com/vue@3"></script>
         <script src="https://cdnjs.cloudfare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
+        <script>
+            const { createApp } = Vue
+
+            createApp({
+                data() {
+                    return {
+                        message: '',
+                        progress: 0,
+                        document: null
+                    }
+                },
+                delimiters : ['[[', ']]'],
+                methods: {
+                    selectFile() {
+                        this.document = this.$refs.file.files.item(0)
+                    }
+                }
+            }).mount('#app')
+        </script>
+
         
     </body>
 </html>
