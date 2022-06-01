@@ -41,7 +41,7 @@
         </section>
 
         <script src="https://unpkg.com/vue@3"></script>
-        <script src="https://cdnjs.cloudfare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
         <script>
             const { createApp } = Vue
 
@@ -57,6 +57,35 @@
                 methods: {
                     selectFile() {
                         this.document = this.$refs.file.files.item(0)
+                    },
+                    upload() {
+                        this.progress = 0
+
+                        this.performUpload(this.document, event => {
+                            this.progress = Math.round((100 * event.loaded) / event.totalt)
+                        })
+                        .then(response => {
+                            this.message = 'The file was uploaded'
+                            this.document = null
+                        })
+                        .catch(error => {
+                            this.progress = 0
+                            this.message = 'Something went wrong, please try again'
+                            this.document = null
+                        })
+                    },
+                    performUpload(file, onUploadProgress) {
+                        let formData = new FormData()
+                        formData.append('document', file)
+
+                        return axios
+                            .post('/upload/', formData, {
+                                headers: {
+                                    "Content-Type": "multipart/form-data",
+                                    "X-CSRFToken": "{{ csrf_token }}"
+                                },
+                                onUploadProgress
+                            })
                     }
                 }
             }).mount('#app')
