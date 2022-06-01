@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Uploader</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     </head>
@@ -12,30 +12,25 @@
             <div class="container">
                 <h1 class="title mb-6">Uploader</h1>
 
-                <div
-                    v-if="document"
-                    class="progress mb-6"
-                >
-                    <progress class="progress is-primary" :value="progress" max="100">[[ progress ]]%</progress>
-                </div>
-
                 <div class="file">
                     <label class="file-label">
-                        <input type="file" ref="file" class="file-input" @change="selectFile">
+                        <input type="file" ref="file" class="file-input" @change="selectFile" multiple>
 
                         <span class="file-cta">
-                            <span class="file-label">Choose a file</span>
+                            <span class="file-label">Choose a file...</span>
                         </span>
                     </label>
                 </div>
-                
-                <button class="button is-primary mt-2" v-if="document">Upload</button>
+
+                <button class="button is-primary mt-2" v-if="documents.length" @click="upload">Upload</button>
 
                 <div 
                     class="notification mt-6"
-                    v-if="message"
+                    v-if="documents.length"
                 >
-                    [[ message ]]
+                    <p v-for="document in documents">
+                        [[ document.name ]] [[ document.status ]]
+                    </p>
                 </div>
             </div>
         </section>
@@ -48,33 +43,41 @@
             createApp({
                 data() {
                     return {
-                        message: '',
-                        progress: 0,
-                        document: null
+                        documents: []
                     }
                 },
-                delimiters : ['[[', ']]'],
+                delimiters: ['[[', ']]'],
                 methods: {
                     selectFile() {
-                        this.document = this.$refs.file.files.item(0)
+                        Array.from(this.$refs.file.files).forEach(file => {
+                            this.upload(file)
+
+                            this.documents.push({
+                                'name': file.name,
+                                'status': 'is uploading'
+                            })
+                        })
                     },
-                    upload() {
+                    upload(file) {
                         this.progress = 0
 
-                        this.performUpload(this.document, event => {
-                            this.progress = Math.round((100 * event.loaded) / event.totalt)
-                        })
+                        this.performUpload(file)
                         .then(response => {
-                            this.message = 'The file was uploaded'
-                            this.document = null
+                            this.documents.forEach(document => {
+                                if (document.name === file.name) {
+                                    document['status'] = 'is uploaded'
+                                }
+                            })
                         })
                         .catch(error => {
-                            this.progress = 0
-                            this.message = 'Something went wrong, please try again'
-                            this.document = null
+                            this.documents.forEach(document => {
+                                if (document.name === file.name) {
+                                    document['status'] = 'failed'
+                                }
+                            })
                         })
                     },
-                    performUpload(file, onUploadProgress) {
+                    performUpload(file) {
                         let formData = new FormData()
                         formData.append('document', file)
 
@@ -83,14 +86,11 @@
                                 headers: {
                                     "Content-Type": "multipart/form-data",
                                     "X-CSRFToken": "{{ csrf_token }}"
-                                },
-                                onUploadProgress
+                                }
                             })
                     }
                 }
             }).mount('#app')
         </script>
-
-        
     </body>
 </html>
